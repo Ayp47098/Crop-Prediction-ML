@@ -1,4 +1,19 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // Clear All Button Functionality
+    document.getElementById("clear-all").addEventListener("click", function () {
+        // Clear all input fields
+        document.getElementById("State_Name").value = "";
+        document.getElementById("District_Name").value = "";
+        document.getElementById("Season").value = "";
+        document.getElementById("Crop").value = "";
+        document.getElementById("Area").value = "";
+        document.getElementById("Crop_Year").value = "";
+
+        // Hide the prediction result
+        document.getElementById("prediction-result").style.display = "none";
+    });
+
+    // Form Submission Functionality
     document.getElementById("prediction-form").addEventListener("submit", function (event) {
         event.preventDefault();
 

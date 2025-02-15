@@ -48,7 +48,10 @@
     <a href="{{ url_for('home') }}" class="home__button">Back</a>
     <div class="container mt-1">
         <div class="card shadow-lg p-4 custom-card">
-            <h2 class="text-center form-title">🌾 Crop Production Prediction 🌿</h2>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-center form-title me-2">🌾 Crop Yield Prediction 🌿</h2>
+                <button id="clear-all" class="btn btn-danger">Clear All</button>
+            </div>
             <form id="prediction-form">
                 <!-- Row 1: State Name and District Name -->
                 <div class="row mb-3">
