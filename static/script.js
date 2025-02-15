@@ -1,19 +1,49 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Clear All Button Functionality
     document.getElementById("clear-all").addEventListener("click", function () {
-        // Clear all input fields
-        document.getElementById("State_Name").value = "";
-        document.getElementById("District_Name").value = "";
-        document.getElementById("Season").value = "";
-        document.getElementById("Crop").value = "";
-        document.getElementById("Area").value = "";
-        document.getElementById("Crop_Year").value = "";
-
-        // Hide the prediction result
+        document.querySelectorAll("input").forEach(input => input.value = "");
         document.getElementById("prediction-result").style.display = "none";
     });
 
-    // Form Submission Functionality
+    // Autocomplete functionality
+    document.querySelectorAll(".autocomplete").forEach(input => {
+        let datalist = document.getElementById(input.id + "-list");
+
+        input.addEventListener("input", function () {
+            let query = this.value.trim();
+            if (query.length < 1) return;
+
+            fetch(this.dataset.url + "?query=" + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(suggestions => {
+                    datalist.innerHTML = "";
+                    suggestions.forEach(suggestion => {
+                        let option = document.createElement("option");
+                        option.value = suggestion;
+                        datalist.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("Error fetching autocomplete data:", error));
+        });
+
+        // Show all seasons when season input is clicked
+        if (input.id === "Season") {
+            input.addEventListener("focus", function () {
+                fetch("/autocomplete/season?query=")
+                    .then(response => response.json())
+                    .then(suggestions => {
+                        datalist.innerHTML = "";
+                        suggestions.forEach(suggestion => {
+                            let option = document.createElement("option");
+                            option.value = suggestion;
+                            datalist.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error("Error fetching seasons:", error));
+            });
+        }
+    });
+
+    // Form submission
     document.getElementById("prediction-form").addEventListener("submit", function (event) {
         event.preventDefault();
 
@@ -28,21 +58,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
         fetch("/predict", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData)
         })
         .then(response => response.json())
         .then(data => {
             let resultDiv = document.getElementById("prediction-result");
-            if (data.error) {
-                resultDiv.className = "alert alert-danger";
-                resultDiv.innerText = "Error: " + data.error;
-            } else {
-                resultDiv.className = "alert alert-success mt-4";
-                resultDiv.innerText = "Predicted Yield: " + data.prediction;
-            }
+            resultDiv.className = data.error ? "alert alert-danger" : "alert alert-success";
+            resultDiv.innerText = data.error ? "Error: " + data.error : "Predicted Yield: " + data.prediction;
             resultDiv.style.display = "block";
         })
         .catch(error => console.error("Error:", error));
