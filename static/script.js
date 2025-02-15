@@ -64,8 +64,9 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             let resultDiv = document.getElementById("prediction-result");
-            resultDiv.className = data.error ? "alert alert-danger" : "alert alert-success";
-            resultDiv.innerText = data.error ? "Error: " + data.error : "Predicted Yield: " + data.prediction;
+            // Check for "Invalid" key instead of "error"
+            resultDiv.className = data.Invalid ? "alert alert-danger" : "alert alert-success";
+            resultDiv.innerText = data.Invalid ? "Invalid: " + data.Invalid : "Predicted Yield: " + data.prediction;
             resultDiv.style.display = "block";
         })
         .catch(error => console.error("Error:", error));

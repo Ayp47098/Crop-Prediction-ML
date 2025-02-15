@@ -20,6 +20,23 @@ crops = sorted(df["Crop"].str.strip().unique().tolist())
 df["District_Name"] = df["District_Name"].str.strip()
 districts = sorted(df["District_Name"].unique().tolist())
 
+# Create a dictionary to store state-district pairs
+state_district_dict = {}
+
+# Populate the dictionary
+for index, row in df.iterrows():
+    state = row['State_Name']
+    district = row['District_Name']
+    
+    if state not in state_district_dict:
+        state_district_dict[state] = set()
+    
+    state_district_dict[state].add(district)
+
+# Convert sets to lists for easier use
+for state in state_district_dict:
+    state_district_dict[state] = list(state_district_dict[state])
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -54,6 +71,14 @@ def predict():
     try:
         data = request.json
         
+        # Extract state and district from the input data
+        state = data.get("State_Name")
+        district = data.get("District_Name")
+
+        # Validate state-district pair
+        if state not in state_district_dict or district not in state_district_dict[state]:
+            return jsonify({"Invalid": "District name is not valid for the given State."})
+
         # Define feature columns
         categorical_cols = ["State_Name", "District_Name", "Season", "Crop"]
         numerical_cols = ["Area", "Crop_Year"]
@@ -74,7 +99,7 @@ def predict():
         return jsonify({"prediction": f"{prediction:.2f} Tons"})
     
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"Invalid": str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True)
