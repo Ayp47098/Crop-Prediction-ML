@@ -1,41 +1,89 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template,send_file
 import joblib
 import pandas as pd
 import json
+import numpy as np
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+import os
 
 app = Flask(__name__, template_folder="templates")
 
-# Load the trained model
-model_path = "models/crop_production_model.joblib"
-model = joblib.load(model_path)
-
-# Load dataset for autocomplete and filtering
+# ================== Common Data Loading ==================
 df = pd.read_csv("datasets/crop_production.csv")
+df_clean = df.copy()
+df_clean["State_Name"] = df_clean["State_Name"].str.strip()
+df_clean["District_Name"] = df_clean["District_Name"].str.strip()
+df_clean["Season"] = df_clean["Season"].str.strip()
+df_clean["Crop"] = df_clean["Crop"].str.strip()
 
-# Extract unique values for frontend dropdowns
-states = sorted(df["State_Name"].unique().tolist())
-seasons = sorted(df["Season"].str.strip().unique().tolist())
-crops = sorted(df["Crop"].str.strip().unique().tolist())
+# ================== Yield Prediction Setup ==================
+yield_model = joblib.load("models/optimized_crop_model.pkl")
+state_district_yield = df_clean.groupby('State_Name')['District_Name'].apply(set).to_dict()
 
-df["District_Name"] = df["District_Name"].str.strip()
-districts = sorted(df["District_Name"].unique().tolist())
+# Create label encoders for yield model
+yield_encoders = {
+    "State": LabelEncoder().fit(df_clean["State_Name"].unique()),
+    "District": LabelEncoder().fit(df_clean["District_Name"].unique()),
+    "Season": LabelEncoder().fit(df_clean["Season"].unique()),
+    "Crop": LabelEncoder().fit(df_clean["Crop"].unique())
+}
 
-# Create a dictionary to store state-district pairs
-state_district_dict = {}
+# ================== Crop Recommendation Setup ==================
+recommend_model = joblib.load("models/crop_classification_model_xgb.joblib")
+recommend_encoders = joblib.load("models/encoders_xgb.joblib")
 
-# Populate the dictionary
-for index, row in df.iterrows():
-    state = row['State_Name']
-    district = row['District_Name']
+# Lowercase validation data
+df_lower = df_clean.copy()
+df_lower["State_Name"] = df_lower["State_Name"].str.lower()
+df_lower["District_Name"] = df_lower["District_Name"].str.lower()
+state_district_recommend = df_lower.groupby('State_Name')['District_Name'].apply(set).to_dict()
+
+# Recommendation encoders
+state_to_code = {state: idx for idx, state in enumerate(sorted(df_lower["State_Name"].unique()))}
+district_to_code = {district: idx for idx, district in enumerate(sorted(df_lower["District_Name"].unique()))}
+
+
+# Create a dictionary mapping crops to PDF paths
+CROP_GUIDES = {
+    "Rice": "static/pdf/rice.pdf",
+    "Wheat": "static/pdf/wheat.pdf",
+    "Maize": "static/pdf/maize.pdf",
+    "Apple":"static/pdf/apple.pdf",
+    "Bajra":"static/pdf/bajra.pdf",
+    "Banana":"static/pdf/banana.pdf",
+    "Sugarcane":"static/pdf/sugarcane.pdf",
+    "Urad":"static/pdf/urad.pdf",
+    "Yam":"static/pdf/yam.pdf",
+    "Paddy":"static/pdf/paddy.pdf",
+    "Sunflower":"static/pdf/sunflower.pdf",
+    "Beet Root":"static/pdf/beetroot.pdf",
+    "Sweet potato":"static/pdf/sweetpotatoe.pdf",
+    "Turmeric":"static/pdf/turmeric.pdf",
+    "Ragi":"static/pdf/ragi.pdf",
+    "Potato":"static/pdf/potato.pdf",
+    "Dry chillies":"static/pdf/drychilli.pdf",
+    "Ginger":"static/pdf/ginger.pdf",
+    "Arecanut":"static/pdf/arecanut.pdf",
+    "Soyabean":"static/pdf/soybean.pdf",
+    "Sesamum":"static/pdf/sesamum.pdf",
+    "Litchi":"static/pdf/litchi.pdf",
+    "Garlic":"static/pdf/garlic.pdf",
+    "Dry ginger":"static/pdf/dryginger.pdf",
+    "Ber":"static/pdf/ber.pdf",
+    "Arhar/Tur":"static/pdf/arhar.pdf",
+    # Add all your crops and their corresponding PDF paths
+    # Example: "Crop Name": "path/to/file.pdf"
+}
+
+@app.route('/download-strategy')
+def download_strategy():
+    crop = request.args.get('crop', '')
+    file_path = CROP_GUIDES.get(crop.strip(), None)
     
-    if state not in state_district_dict:
-        state_district_dict[state] = set()
-    
-    state_district_dict[state].add(district)
-
-# Convert sets to lists for easier use
-for state in state_district_dict:
-    state_district_dict[state] = list(state_district_dict[state])
+    if not file_path or not os.path.exists(file_path):
+        return jsonify({"error": "Strategy not found"}), 404
+        
+    return send_file(file_path, as_attachment=True)
 
 @app.route('/')
 def home():
@@ -43,63 +91,98 @@ def home():
 
 @app.route('/model')
 def model_page():
-    return render_template(
-        'model.html', 
-        states=json.dumps(states),  # Sending JSON for autocomplete
-        seasons=json.dumps(seasons),
-        crops=json.dumps(crops),
-        districts=json.dumps(districts)
+    return render_template('model.html',
+        states=json.dumps(sorted(df_clean["State_Name"].unique().tolist())),
+        districts=json.dumps(sorted(df_clean["District_Name"].unique().tolist())),
+        seasons=json.dumps(sorted(df_clean["Season"].unique().tolist())),
+        crops=json.dumps(sorted(df_clean["Crop"].unique().tolist()))
     )
 
 @app.route('/autocomplete/<field>')
 def autocomplete(field):
-    query = request.args.get('query', '').strip().lower()
+    query = request.args.get('query', '').lower()
+    suggestions = []
+    
     if field == 'state':
-        suggestions = [state for state in states if query in state.lower()]
+        suggestions = [s for s in df_clean["State_Name"].unique() if query in s.lower()]
     elif field == 'district':
-        suggestions = [district for district in districts if query in district.lower()]
+        suggestions = [d for d in df_clean["District_Name"].unique() if query in d.lower()]
     elif field == 'season':
-        suggestions = [season for season in seasons if query in season.lower()]
+        suggestions = [s for s in df_clean["Season"].unique() if query in s.lower()]
     elif field == 'crop':
-        suggestions = [crop for crop in crops if query in crop.lower()]
-    else:
-        suggestions = []
-    return jsonify(suggestions)
+        suggestions = [c for c in df_clean["Crop"].unique() if query in c.lower()]
+    
+    return jsonify(suggestions[:15])
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    data = request.json
+    result = {"yield": None, "crop": None, "error": None}
+
     try:
-        data = request.json
+        state = data.get("State_Name", "").strip()
+        district = data.get("District_Name", "").strip()
         
-        # Extract state and district from the input data
-        state = data.get("State_Name")
-        district = data.get("District_Name")
+        # Validate state-district first
+        valid_districts = state_district_yield.get(state, set())
+        valid_districts_lower = state_district_recommend.get(state.lower(), set())
+        
+        if not state or not district:
+            result["error"] = "State and District are required fields"
+        elif district not in valid_districts or district.lower() not in valid_districts_lower:
+            result["error"] = f"Invalid district for {state}. Valid districts: {', '.join(sorted(valid_districts))}"
+        else:
+            # ================== Yield Prediction Fix ==================
+            try:
+                # Create DataFrame with original column names
+                input_df = pd.DataFrame([{
+                    "State_Name": state,
+                    "District_Name": district,
+                    "Season": data.get("Season", "").strip(),
+                    "Crop": data.get("Crop", "").strip(),
+                    "Area": float(data.get("Area", 0)),
+                    "Crop_Year": float(data.get("Crop_Year", 0))
+                }])
 
-        # Validate state-district pair
-        if state not in state_district_dict or district not in state_district_dict[state]:
-            return jsonify({"Invalid": "District name is not valid for the given State."})
+                # Ensure correct column order as trained
+                input_df = input_df[yield_model.feature_names_in_]
 
-        # Define feature columns
-        categorical_cols = ["State_Name", "District_Name", "Season", "Crop"]
-        numerical_cols = ["Area", "Crop_Year"]
+                # Predict using DataFrame
+                prediction = yield_model.predict(input_df)[0]
+                result["yield"] = f"{prediction:.2f} Tons"
+            
+            except Exception as e:
+                result["error"] = f"Yield prediction error: {str(e)}"
 
-        # Convert input data to DataFrame
-        input_df = pd.DataFrame([data])
+            # ================== Crop Recommendation ==================
+            try:
+                if not result["error"]:  # Only recommend if validation passed
+                    season_value = data.get("Season", "").lower()
+                    season_encoded = recommend_encoders["Season"].transform([[season_value]])
+                    season_features = season_encoded.toarray()[0] if hasattr(season_encoded, 'toarray') else season_encoded[0]
 
-        # Ensure correct column order
-        input_df = input_df[categorical_cols + numerical_cols]
+                    scaled_features = recommend_encoders["Scaler"].transform([[
+                        float(data.get("Area", 0)),
+                        float(data.get("Crop_Year", 0))
+                    ]])[0]
 
-        # Convert numerical columns to correct type
-        input_df[numerical_cols] = input_df[numerical_cols].astype(float)
+                    input_features = np.concatenate([
+                        [state_to_code[state.lower()]],
+                        [district_to_code[district.lower()]],
+                        scaled_features,
+                        season_features
+                    ]).reshape(1, -1)
 
-        # Predict using the model and ensure it's a float
-        prediction = float(model.predict(input_df)[0])
+                    pred = recommend_model.predict(input_features)[0]
+                    result["crop"] = recommend_encoders["Crop"].inverse_transform([pred])[0]
+            
+            except Exception as e:
+                if not result.get("yield"):  # Only show error if yield also failed
+                    result["error"] = f"Prediction error: {str(e)}"
 
-        # Return formatted prediction (rounded to 2 decimal places)
-        return jsonify({"prediction": f"{prediction:.2f} Tons"})
-    
     except Exception as e:
-        return jsonify({"Invalid": str(e)})
+        result["error"] = str(e)
 
+    return jsonify(result)
 if __name__ == '__main__':
     app.run(debug=True)
