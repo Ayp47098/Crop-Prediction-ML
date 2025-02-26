@@ -126,6 +126,9 @@ CROP_GUIDES = {
     "Pear":"static/pdf/pear.pdf",
     "Pineapple":"static/pdf/pineapple.pdf",
     "Plums":"static/pdf/plum.pdf",
+    "Bhindi":"static/pdf/bhindi.pdf",
+    "Cowpea(Lobia)":"static/pdf/cowpea.pdf",
+    "Black pepper":"static/pdf/blackpepper.pdf",
 
 }
 
