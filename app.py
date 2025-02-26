@@ -96,6 +96,12 @@ CROP_GUIDES = {
     "Orange":"static/pdf/orange.pdf",
     "Brinjal":"static/pdf/brinjal.pdf",
     "Grapes":"static/pdf/grape.pdf",
+    "Carrot":"static/pdf/carrot.pdf",
+    "Rubber":"static/pdf/rubber.pdf",
+    "Turnip":"static/pdf/turnip.pdf",
+    "Small millets":"static/pdf/small millets.pdf",
+    "Cauliflower":"static/pdf/cauiliflower.pdf",
+    "Safflower":"static/pdf/safflower.pdf",
 }
 
 @app.route('/download-strategy')
