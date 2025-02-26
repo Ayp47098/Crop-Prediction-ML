@@ -102,6 +102,8 @@ CROP_GUIDES = {
     "Small millets":"static/pdf/small millets.pdf",
     "Cauliflower":"static/pdf/cauiliflower.pdf",
     "Safflower":"static/pdf/safflower.pdf",
+    "Papaya":"static/pdf/papaya.pdf",
+    "Bean":"static/pdf/bean.pdf",
 }
 
 @app.route('/download-strategy')
