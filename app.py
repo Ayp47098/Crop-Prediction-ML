@@ -74,6 +74,11 @@ CROP_GUIDES = {
     "Barley":"static/pdf/barley.pdf",
     "Cabbage":"static/pdf/cabbage.pdf",
     "Onion":"static/pdf/onion.pdf",
+    "Ash Gourd":"static/pdf/ashgourd.pdf",
+    "Tobacco":"static/pdf/tobacco.pdf",
+    "Coconut":"static/pdf/coconut.pdf",
+    "Castor seed":"static/pdf/Castorseed.pdf",
+    "Tomato":"static/pdf/tomato.pdf",
 }
 
 @app.route('/download-strategy')
