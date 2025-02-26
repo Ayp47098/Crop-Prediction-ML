@@ -79,6 +79,11 @@ CROP_GUIDES = {
     "Coconut":"static/pdf/coconut.pdf",
     "Castor seed":"static/pdf/Castorseed.pdf",
     "Tomato":"static/pdf/tomato.pdf",
+    "Coffe":"static/pdf/coffe.pdf",
+    "Tea":"static/pdf/tea.pdf",
+    "Jute":"static/pdf/jute.pdf",
+    "Mesta":"static/pdf/mesta.pdf",
+    "Jute & mesta":"static/pdf/jutemesta.pdf",
 }
 
 @app.route('/download-strategy')
