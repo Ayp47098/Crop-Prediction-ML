@@ -119,6 +119,13 @@ CROP_GUIDES = {
     "Guar seed":"static/pdf/gaurseed.pdf",
     "Groundnut":"static/pdf/groundnut.pdf",
     "Masoor":"static/pdf/Masoor.pdf",
+    "Pulses total":"static/pdf/pulses.pdf",
+    "Other Vegetables":"static/pdf/vegetables.pdf",
+    "Linseed":"static/pdf/linseed.pdf",
+    "Niger seed":"static/pdf/nigerseed.pdf",
+    "Pear":"static/pdf/pear.pdf",
+    "Pineapple":"static/pdf/pineapple.pdf",
+    "Plums":"static/pdf/plum.pdf",
 
 }
 
