@@ -104,6 +104,22 @@ CROP_GUIDES = {
     "Safflower":"static/pdf/safflower.pdf",
     "Papaya":"static/pdf/papaya.pdf",
     "Bean":"static/pdf/bean.pdf",
+    "Pump Kin":"static/pdf/pumpkin.pdf",
+    "Lentil":"static/pdf/lentil.pdf",
+    "Oilseeds total":"static/pdf/oilseeds.pdf",
+    "other oilseeds":"static/pdf/oilseeds2.pdf",
+    "Bitter Gourd":"static/pdf/bittergourd.pdf",
+    "Bottle Gourd":"static/pdf/bottlegourd.pdf",
+    "Cucumber":"static/pdf/cucumber.pdf",
+    "Cashewnut":"static/pdf/kaju.pdf",
+    "Cashewnut Processed":"static/pdf/kaju2.pdf",
+    "Ribed Guard":"static/pdf/ribedgourd.pdf",
+    "Drum Stick":"static/pdf/drumstick.pdf",
+    "Redish":"static/pdf/radish.pdf",
+    "Guar seed":"static/pdf/gaurseed.pdf",
+    "Groundnut":"static/pdf/groundnut.pdf",
+    "Masoor":"static/pdf/Masoor.pdf",
+
 }
 
 @app.route('/download-strategy')
