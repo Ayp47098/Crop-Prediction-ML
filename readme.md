@@ -42,7 +42,7 @@ Agriware is an intelligent web application that helps users predict **crop yield
   
 
 - Project is going to be live soon ......
-- Open your browser and visit http://127.0.0.1:8000/ to view the app.
+- Open your browser and visit http://127.0.0.1:5000/ to view the app.
 
 
 ## Contribution
