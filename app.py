@@ -71,8 +71,9 @@ CROP_GUIDES = {
     "Dry ginger":"static/pdf/dryginger.pdf",
     "Ber":"static/pdf/ber.pdf",
     "Arhar/Tur":"static/pdf/arhar.pdf",
-    # Add all your crops and their corresponding PDF paths
-    # Example: "Crop Name": "path/to/file.pdf"
+    "Barley":"static/pdf/barley.pdf",
+    "Cabbage":"static/pdf/cabbage.pdf",
+    "Onion":"static/pdf/onion.pdf",
 }
 
 @app.route('/download-strategy')
