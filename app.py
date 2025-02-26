@@ -83,7 +83,15 @@ CROP_GUIDES = {
     "Tea":"static/pdf/tea.pdf",
     "Jute":"static/pdf/jute.pdf",
     "Mesta":"static/pdf/mesta.pdf",
+    "Jowar":"static/pdf/jowar.pdf",
+    "Mango":"static/pdf/mango.pdf",
+    "Water Melon":"static/pdf/watermelon.pdf",
     "Jute & mesta":"static/pdf/jutemesta.pdf",
+    "Gram":"static/pdf/gram.pdf",
+    "Blackgram":"static/pdf/blackgram.pdf",
+    "Horse-gram":"static/pdf/horsegram.pdf",
+    "Moong(Green Gram)":"static/pdf/moong.pdf",
+    "Cotton(lint)":"static/pdf/cotton.pdf",
 }
 
 @app.route('/download-strategy')
