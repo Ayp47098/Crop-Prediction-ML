@@ -92,6 +92,10 @@ CROP_GUIDES = {
     "Horse-gram":"static/pdf/horsegram.pdf",
     "Moong(Green Gram)":"static/pdf/moong.pdf",
     "Cotton(lint)":"static/pdf/cotton.pdf",
+    "Khesari":"static/pdf/khesari.pdf",
+    "Orange":"static/pdf/orange.pdf",
+    "Brinjal":"static/pdf/brinjal.pdf",
+    "Grapes":"static/pdf/grape.pdf",
 }
 
 @app.route('/download-strategy')
