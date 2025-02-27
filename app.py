@@ -129,6 +129,12 @@ CROP_GUIDES = {
     "Bhindi":"static/pdf/bhindi.pdf",
     "Cowpea(Lobia)":"static/pdf/cowpea.pdf",
     "Black pepper":"static/pdf/blackpepper.pdf",
+    "Arcanut (Processed)":"static/pdf/Arcanutprocessed.pdf",
+    "other fibres":"static/pdf/fibre.pdf",
+    "Other Kharif pulses":"static/pdf/kharifpulse.pdf",
+    "Other Kharif pulses":"static/pdf/kharifpulse.pdf",
+    "Other  Rabi pulses":"static/pdf/rabipulse.pdf",
+    "Peas  (vegetable)":"static/pdf/peas.pdf",
 
 }
 
