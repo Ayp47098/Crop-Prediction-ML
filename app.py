@@ -254,7 +254,7 @@ def predict():
 ## Experiments
 # Load model and encoders
 global_model = joblib.load("models/random_forest_model.joblib")
-label_encoders = joblib.load("models/randomforest_encoders.joblib")
+label_encoders = joblib.load("models/latest_label_encoders.joblib")
 
 
 @app.route('/harvest')
