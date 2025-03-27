@@ -261,58 +261,69 @@ label_encoders = joblib.load("models/latest_label_encoders.joblib")
 def harvest():
     return render_template('harvest.html')
 
-@app.route('/predict-harvest', methods=['POST']) 
+# Define feature order expected by the model
+FEATURE_ORDER = [
+    'Region', 'Soil_Type', 'Crop', 'Rainfall_mm', 'Temperature_Celsius',
+    'Fertilizer_Used', 'Irrigation_Used', 'Weather_Condition', 'Days_to_Harvest'
+]
+
+@app.route('/predict-harvest', methods=['POST'])
 def predict_harvest():
-    data = request.json
-    print("Received data:", data)  # Debugging step
-    result = {"yield": None, "error": None}
-
     try:
-        # Convert numeric fields safely
-        def safe_convert(value, default=0):
+        data = request.json
+        
+        # Validate and convert inputs
+        def validate_numeric(value, field, min_val, max_val):
             try:
-                return float(value)
+                num = float(value)
+                if not (min_val <= num <= max_val):
+                    raise ValueError
+                return num
             except (ValueError, TypeError):
-                return default
+                raise ValueError(f"Invalid {field}. Must be between {min_val}-{max_val}")
 
-        rainfall = safe_convert(data.get("rainfall"))
-        temperature = safe_convert(data.get("temperature"))
-        days_to_harvest = safe_convert(data.get("daysToHarvest"), default=0)
+        # Create input dictionary
+        raw_data = {
+            "Region": data.get("region", "").strip(),
+            "Soil_Type": data.get("soilType", "").strip(),
+            "Crop": data.get("crop", "").strip(),
+            "Rainfall_mm": validate_numeric(data.get("rainfall"), "rainfall", 0, 3000),
+            "Temperature_Celsius": validate_numeric(data.get("temperature"), "temperature", -50, 60),
+            "Fertilizer_Used": int(data.get("fertilizer", 0)),
+            "Irrigation_Used": int(data.get("irrigation", 0)),
+            "Weather_Condition": data.get("weather", "").strip(),
+            "Days_to_Harvest": validate_numeric(data.get("daysToHarvest"), "daysToHarvest", 1, 365)
+        }
+
+        # Create DataFrame
+        input_df = pd.DataFrame([raw_data], columns=FEATURE_ORDER)
 
         # Encode categorical features
-        def encode_feature(value, feature_name):
-            encoder = label_encoders.get(feature_name)
-            if encoder and value in encoder.classes_:
-                return encoder.transform([value])[0]
-            return -1  # Handle unseen categories
+        encoded_data = input_df.copy()
+        for col in ['Region', 'Soil_Type', 'Crop', 'Weather_Condition']:
+            # Handle unseen categories
+            encoded_data[col] = encoded_data[col].apply(
+                lambda x: x if x in label_encoders[col].classes_ else 'unknown'
+            )
+            encoded_data[col] = label_encoders[col].transform(encoded_data[col])
 
-        region = encode_feature(data.get("region"), "Region")
-        soil_type = encode_feature(data.get("soilType"), "Soil_Type")
-        crop = encode_feature(data.get("crop"), "Crop")
-        weather = encode_feature(data.get("weather"), "Weather_Condition")
+        # Convert to numpy array
+        processed_input = encoded_data.values.reshape(1, -1)
 
-        # Convert boolean fields to integers
-        fertilizer = int(data.get("fertilizer", 0))
-        irrigation = int(data.get("irrigation", 0))
-
-        # Validate inputs
-        if -1 in [region, soil_type, crop, weather] or rainfall <= 0 or temperature <= 0 or days_to_harvest <= 0:
-            result["error"] = "Invalid inputs. Ensure all fields have correct values."
-        else:
-            # Prepare input data (ensure this matches model expectations)
-            input_data = np.array([[
-                region, soil_type, crop, rainfall, temperature,
-                fertilizer, irrigation, weather, days_to_harvest
-            ]])
-
-            prediction = global_model.predict(input_data)[0]
-            result["yield"] = f"{prediction:.2f} Tons"
+        # Make prediction
+        prediction = global_model.predict(processed_input)[0]
+        
+        return jsonify({
+            "yield": f"{prediction:.2f} Tons",
+            "error": None
+        })
 
     except Exception as e:
-        result["error"] = f"Prediction error: {str(e)}"
+        return jsonify({
+            "yield": None,
+            "error": f"Prediction error: {str(e)}"
+        }), 400
 
-    print("Sending Response:", result)
-    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(debug=True)
