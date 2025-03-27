@@ -5,6 +5,7 @@ import json
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 import os
+import pickle
 
 app = Flask(__name__, template_folder="templates")
 
@@ -247,5 +248,71 @@ def predict():
         result["error"] = str(e)
 
     return jsonify(result)
+
+
+
+## Experiments
+# Load model and encoders
+global_model = joblib.load("models/random_forest_model.joblib")
+label_encoders = joblib.load("models/randomforest_encoders.joblib")
+
+
+@app.route('/harvest')
+def harvest():
+    return render_template('harvest.html')
+
+@app.route('/predict-harvest', methods=['POST']) 
+def predict_harvest():
+    data = request.json
+    print("Received data:", data)  # Debugging step
+    result = {"yield": None, "error": None}
+
+    try:
+        # Convert numeric fields safely
+        def safe_convert(value, default=0):
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                return default
+
+        rainfall = safe_convert(data.get("rainfall"))
+        temperature = safe_convert(data.get("temperature"))
+        days_to_harvest = safe_convert(data.get("daysToHarvest"), default=0)
+
+        # Encode categorical features
+        def encode_feature(value, feature_name):
+            encoder = label_encoders.get(feature_name)
+            if encoder and value in encoder.classes_:
+                return encoder.transform([value])[0]
+            return -1  # Handle unseen categories
+
+        region = encode_feature(data.get("region"), "Region")
+        soil_type = encode_feature(data.get("soilType"), "Soil_Type")
+        crop = encode_feature(data.get("crop"), "Crop")
+        weather = encode_feature(data.get("weather"), "Weather_Condition")
+
+        # Convert boolean fields to integers
+        fertilizer = int(data.get("fertilizer", 0))
+        irrigation = int(data.get("irrigation", 0))
+
+        # Validate inputs
+        if -1 in [region, soil_type, crop, weather] or rainfall <= 0 or temperature <= 0 or days_to_harvest <= 0:
+            result["error"] = "Invalid inputs. Ensure all fields have correct values."
+        else:
+            # Prepare input data (ensure this matches model expectations)
+            input_data = np.array([[
+                region, soil_type, crop, rainfall, temperature,
+                fertilizer, irrigation, weather, days_to_harvest
+            ]])
+
+            prediction = global_model.predict(input_data)[0]
+            result["yield"] = f"{prediction:.2f} Tons"
+
+    except Exception as e:
+        result["error"] = f"Prediction error: {str(e)}"
+
+    print("Sending Response:", result)
+    return jsonify(result)
+
 if __name__ == '__main__':
     app.run(debug=True)
