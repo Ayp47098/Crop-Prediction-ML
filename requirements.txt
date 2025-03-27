@@ -1,6 +1,6 @@
 # Core ML dependencies
 scikit-learn==1.2.2  # Critical for feature encoders
-xgboost==1.7.0  # Must match model serialization version
+xgboost==2.0.3  # Must match model serialization version
 
 # Web framework
 Flask==2.0.3
