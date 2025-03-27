@@ -1,6 +1,8 @@
+# requirements.txt
+
 # Core ML dependencies
-scikit-learn==1.2.2  # Critical for feature encoders
-xgboost==2.0.3  # Must match model serialization version
+scikit-learn==1.6.1  # Match the version used for pickling
+xgboost==2.0.3
 
 # Web framework
 Flask==2.0.3
