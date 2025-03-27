@@ -7,7 +7,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 import os
 import pickle
 
-app = Flask(__name__, template_folder="templates")
+app = Flask(__name__, static_folder="static", template_folder="templates")
 
 # ================== Common Data Loading ==================
 df = pd.read_csv("datasets/crop_production.csv")
