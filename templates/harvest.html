@@ -186,7 +186,8 @@
       border: 1px solid white;
       backdrop-filter: blur(8px);
       display: none;
-      transition: background-color 1s ease;
+      z-index: 1000;
+      transition:all 0.5s ease;
     }
 
     #result-text {
@@ -203,10 +204,24 @@
       background: none;
       border: none;
       padding: 0 0.5rem;
+      z-index: 1001;
+      pointer-events: auto;
     }
 
     .close-result:hover {
       color: hsl(0, 100%, 70%);
+    }
+
+    /* Input error styling */
+    .input-error {
+      border-bottom: 2px solid #ff0000 !important;
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
     }
   </style>
 </head>
@@ -219,7 +234,6 @@
       <h1 class="login__title">Crop Yield Prediction</h1>
 
       <div class="login__content">
-        <!-- All your form fields remain the same -->
         <!-- Region -->
         <div class="login__box">
           <i class="ri-map-pin-line login__icon"></i>
@@ -270,7 +284,16 @@
         <div class="login__box">
           <i class="ri-drop-line login__icon"></i>
           <div class="login__box-input">
-            <input type="number" required class="login__input" id="rainfall" placeholder="">
+            <input 
+              type="number" 
+              required 
+              class="login__input" 
+              id="rainfall" 
+              step="0.1"
+              min="0"
+              max="3000"
+              placeholder=" "
+            >
             <label for="rainfall" class="login__label">Rainfall (mm)</label>
           </div>
         </div>
@@ -279,12 +302,21 @@
         <div class="login__box">
           <i class="ri-temp-cold-line login__icon"></i>
           <div class="login__box-input">
-            <input type="number" required class="login__input" id="temperature" placeholder="">
+            <input 
+              type="number" 
+              required 
+              class="login__input" 
+              id="temperature" 
+              step="0.1"
+              min="-50"
+              max="60"
+              placeholder=" "
+            >
             <label for="temperature" class="login__label">Temperature (°C)</label>
           </div>
         </div>
 
-        <!-- Fertilizer Used (kg) -->
+        <!-- Fertilizer Used -->
         <div class="login__box">
           <i class="ri-flask-line login__icon"></i>
           <div class="login__box-input">
@@ -325,16 +357,22 @@
         <div class="login__box">
           <i class="ri-calendar-line login__icon"></i>
           <div class="login__box-input">
-            <input type="number" required class="login__input" id="daysToHarvest" placeholder="">
+            <input 
+              type="number" 
+              required 
+              class="login__input" 
+              id="daysToHarvest" 
+              min="1"
+              max="365"
+              placeholder=" "
+            >
             <label for="daysToHarvest" class="login__label">Days to Harvest</label>
           </div>
         </div>
       </div>
 
-      <!-- Predict Button -->
       <button type="submit" class="login__button">Predict</button>
 
-      <!-- Prediction Result with close button -->
       <div id="prediction-result">
         <button class="close-result" aria-label="Close result">&times;</button>
         <p id="result-text"></p>
@@ -348,83 +386,84 @@
       const resultDiv = document.getElementById("prediction-result");
       const resultText = document.getElementById("result-text");
       const closeBtn = document.querySelector(".close-result");
-  
-      // Numeric validation function
+
+      // Close button handler
+      closeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        resultDiv.style.display = "none";
+        form.reset();
+        document.querySelectorAll(".input-error").forEach(el => {
+          el.classList.remove("input-error");
+        });
+      });
+
+      // Numeric validation
       const validateNumber = (id, min, max) => {
-          const input = document.getElementById(id);
-          const value = parseFloat(input.value);
-          if (isNaN(value) || value < min || value > max) {
-              input.classList.add("input-error");
-              return null;
-          }
-          input.classList.remove("input-error");
-          return value;
+        const input = document.getElementById(id);
+        const value = parseFloat(input.value);
+        if (isNaN(value) || value < min || value > max) {
+          input.classList.add("input-error");
+          return null;
+        }
+        input.classList.remove("input-error");
+        return value;
       };
-  
-      // Error handling
-      const showError = (message) => {
+
+      // Form submission
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        resultDiv.style.display = "none";
+
+        // Validate inputs
+        const rainfall = validateNumber("rainfall", 0, 3000);
+        const temperature = validateNumber("temperature", -50, 60);
+        const daysToHarvest = validateNumber("daysToHarvest", 1, 365);
+
+        if ([rainfall, temperature, daysToHarvest].some(v => v === null)) {
           resultDiv.style.display = "block";
           resultDiv.style.backgroundColor = "#ff000020";
-          resultText.textContent = message;
-      };
-  
-      // Form submission handler
-      form.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          resultDiv.style.display = "none";
-  
-          // Validate numeric inputs
-          const rainfall = validateNumber("rainfall", 0, 3000);
-          const temperature = validateNumber("temperature", -50, 80);
-          const daysToHarvest = validateNumber("daysToHarvest", 1, 600);
-  
-          if ([rainfall, temperature, daysToHarvest].some(v => v === null)) {
-              showError("Please enter appropriate logical numeric values.");
-              return;
+          resultText.textContent = "Please check highlighted fields";
+          return;
+        }
+
+        // Prepare data
+        const formData = {
+          region: document.getElementById("region").value,
+          soilType: document.getElementById("soilType").value,
+          crop: document.getElementById("crop").value,
+          rainfall: rainfall,
+          temperature: temperature,
+          fertilizer: document.getElementById("fertilizer").value,
+          irrigation: document.getElementById("irrigation").value,
+          weather: document.getElementById("weather").value,
+          daysToHarvest: daysToHarvest
+        };
+
+        try {
+          resultText.textContent = "Analyzing data...";
+          resultDiv.style.display = "block";
+
+          const response = await fetch("/predict-harvest", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData)
+          });
+
+          const data = await response.json();
+          
+          if (data.error) {
+            resultDiv.style.backgroundColor = "#ff000020";
+            resultText.textContent = `Error: ${data.error}`;
+          } else {
+            resultDiv.style.backgroundColor = "#00ff0020";
+            resultText.textContent = `Predicted Yield: ${data.yield}`;
           }
-  
-          // Prepare form data
-          const formData = {
-              region: document.getElementById("region").value,
-              soilType: document.getElementById("soilType").value,
-              crop: document.getElementById("crop").value,
-              rainfall: rainfall,
-              temperature: temperature,
-              fertilizer: document.getElementById("fertilizer").value,
-              irrigation: document.getElementById("irrigation").value,
-              weather: document.getElementById("weather").value,
-              daysToHarvest: daysToHarvest
-          };
-  
-          try {
-              // Show loading state
-              resultText.textContent = "Analyzing crop data...";
-              resultDiv.style.display = "block";
-  
-              const response = await fetch("/predict-harvest", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(formData)
-              });
-  
-              const data = await response.json();
-              
-              if (data.error) {
-                  showError(data.error);
-              } else {
-                  resultDiv.style.backgroundColor = "#00ff0020";
-                  resultText.textContent = `Predicted Yield: ${data.yield}`;
-              }
-          } catch (error) {
-              showError("Network error. Please try again.");
-          }
+        } catch (error) {
+          resultDiv.style.backgroundColor = "#ff000020";
+          resultText.textContent = "Network error. Please try again.";
+        }
       });
-  
-      // Close button handler
-      closeBtn.addEventListener("click", () => {
-          resultDiv.style.display = "none";
-      });
-  });
+    });
   </script>
 </body>
 </html>
