@@ -4,8 +4,9 @@
 scikit-learn==1.6.1  # Match the version used for pickling
 xgboost==2.0.3
 
-# Web framework
-Flask==2.0.3
+Flask==3.0.3
+Werkzeug==2.3.8
+
 
 # Data handling
 pandas==1.5.3
