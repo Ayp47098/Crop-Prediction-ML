@@ -3,6 +3,10 @@
 
 Agriware is an intelligent web application that helps users predict **crop yield** based on key inputs like location, land area, crop type, and season. It also suggests the **best crops** for cultivation and provides helpful **harvesting strategies**. With high prediction accuracy, the app supports both **regional and global datasets**, making it a valuable tool for farmers, researchers, and agribusinesses.  
  
+## Demonstration
+
+https://github.com/user-attachments/assets/95e29608-1945-40d8-8a6a-a50da673647b
+
 
 ## Setup of Project
 - To run the project: `python app.py`.
